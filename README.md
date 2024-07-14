@@ -1,7 +1,5 @@
-![](https://github.com/poyilee1030/coolpc_crawler/blob/main/coolpc.jpg)
-
 <p float="left">
-  <img src="/coolpc.jpg" width="100" />
+  <img src="/coolpc.jpg" width="480" />
 </p>
 
 1. create enviornment, python 3.6 ~ 3.8 is tested and workable.
