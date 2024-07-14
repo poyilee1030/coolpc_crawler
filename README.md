@@ -21,8 +21,8 @@ By default, it fetches data every hour.
 If it detects a price discrepancy with the database, it will notify the user via LINE.
 
 Installation Steps:
-Set up your environment; Python versions 3.6 to 3.8 have been tested and are compatible.
-Use Selenium 3.141.0; Selenium 4 is incompatible with certain syntax.
-Check your Chrome version and download the compatible chromedriver.exe, placing it in this directory.
+1. Set up your environment; Python versions 3.6 to 3.8 have been tested and are compatible.
+2. Use Selenium 3.141.0; Selenium 4 is incompatible with certain syntax.
+3. Check your Chrome version and download the compatible chromedriver.exe, placing it in this directory.
 
 
