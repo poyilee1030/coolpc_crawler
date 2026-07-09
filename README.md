@@ -55,6 +55,8 @@
    ```
 
 > 未填 Telegram 設定時，程式不會報錯，會改用主控台輸出（方便先測試爬蟲）。
+> Telegram 發送失敗（token/chat id 錯誤、連線問題）不會中斷爬蟲，只會記在 log，
+> 若通知一直沒收到，請檢查執行時的 log。
 
 ---
 
@@ -82,8 +84,20 @@ python main.py
 | `PRICE_CHANGE_THRESHOLD` | `10` | 價差超過多少元才通知 |
 | `CRAWL_INTERVAL_MINUTES` | `0` | 每隔幾分鐘爬一次；0 = 只跑一次 |
 | `CATEGORY_IDS` | 預設清單 | 要爬的類別 id，逗號分隔，例：`4,12,15` |
+| `IGNORE_ITEMS` | 空 | 不通知的商品名稱（完全比對），逗號分隔 |
 
 類別 id 對照表見 `config.py` 的 `CATEGORIES`。
+
+---
+
+## 測試
+
+純邏輯（解析器、SQLite 讀寫、通知切割、漲跌方向）都有單元測試，只依賴標準
+函式庫，不需安裝 selenium / requests：
+
+```bash
+python -m unittest test_coolpc -v   # Windows 可用 py -m unittest test_coolpc -v
+```
 
 ---
 

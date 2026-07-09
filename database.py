@@ -30,6 +30,11 @@ class CategoryDatabase:
             f'CREATE TABLE IF NOT EXISTS "{self.table}" '
             f"(id INTEGER PRIMARY KEY, {cols});"
         )
+        # 每個 cell 都會依名稱查詢，建索引避免全表掃描（舊 DB 也會自動補上）。
+        self.conn.execute(
+            f'CREATE INDEX IF NOT EXISTS "{self.table}_name_idx" '
+            f'ON "{self.table}" ("名稱");'
+        )
         self.conn.commit()
 
     def get_latest(self, name: str) -> Optional[Tuple[str, str]]:

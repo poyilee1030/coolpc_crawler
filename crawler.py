@@ -5,10 +5,6 @@ import datetime
 import logging
 from typing import List, Optional
 
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-
 from config import CATEGORIES, COOLPC_URL, Settings
 from database import CategoryDatabase
 from notifier import Notifier
@@ -38,6 +34,10 @@ class CoolpcCrawler:
     def _build_driver(self):
         # Selenium 4.6+ 內建 Selenium Manager，會自動下載對應的 chromedriver，
         # 不再需要手動放 chromedriver.exe。
+        # 延遲匯入 selenium：讓純邏輯（價格比對等）在沒裝 selenium 時也能被匯入 / 測試。
+        from selenium import webdriver
+        from selenium.webdriver.chrome.options import Options
+
         options = Options()
         if self.settings.headless:
             options.add_argument("--headless=new")
@@ -47,6 +47,8 @@ class CoolpcCrawler:
         return driver
 
     def _crawl_category(self, category_id: int) -> None:
+        from selenium.webdriver.common.by import By
+
         key, display = CATEGORIES[category_id]
         now = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         logger.info("爬取 %s（%s）", key, display)
@@ -64,6 +66,14 @@ class CoolpcCrawler:
 
             tables = self.driver.find_elements(By.XPATH, '//table[contains(text(), "")]')
             start, end = 3, len(tables) - 2
+            if end <= start:
+                # 頁面結構若改變（table 數量異常）會靜默抓不到東西，這裡明確警告。
+                logger.warning(
+                    "%s：表格數量異常（找到 %s 個 table），可能是頁面結構改變，未擷取任何資料",
+                    key,
+                    len(tables),
+                )
+                return
             for idx in range(start, end):
                 table = tables[idx]
                 header = table.text.strip()
@@ -74,6 +84,8 @@ class CoolpcCrawler:
                     self.notifier.send(f"【{display}】{header}\n{body}")
 
     def _collect_changes(self, db, now, table) -> List[str]:
+        from selenium.webdriver.common.by import By
+
         changes: List[str] = []
         for tbody in table.find_elements(By.CSS_SELECTOR, "tbody"):
             for row in tbody.find_elements(By.CSS_SELECTOR, "tr"):

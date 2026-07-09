@@ -3,6 +3,7 @@
 祕密金鑰與可調參數都來自環境變數（可透過 .env 檔載入），
 完整清單見 .env.example。
 """
+import logging
 import os
 from dataclasses import dataclass, field
 
@@ -12,6 +13,8 @@ try:
     load_dotenv()
 except ImportError:  # python-dotenv 為選用；沒有它也能直接讀環境變數
     pass
+
+logger = logging.getLogger(__name__)
 
 
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -51,7 +54,11 @@ def _get_int(name, default):
     raw = os.environ.get(name)
     if raw is None or raw.strip() == "":
         return default
-    return int(raw)
+    try:
+        return int(raw.strip())
+    except ValueError:
+        logger.warning("環境變數 %s=%r 不是整數，改用預設值 %s", name, raw, default)
+        return default
 
 
 def _get_bool(name, default):
@@ -59,6 +66,31 @@ def _get_bool(name, default):
     if raw is None:
         return default
     return raw.strip().lower() in ("1", "true", "yes", "on")
+
+
+def _get_int_list(name):
+    """逗號分隔的整數清單；非數字項目會警告並略過。空值回傳 None。"""
+    raw = os.environ.get(name, "").strip()
+    if not raw:
+        return None
+    values = []
+    for part in raw.split(","):
+        part = part.strip()
+        if not part:
+            continue
+        try:
+            values.append(int(part))
+        except ValueError:
+            logger.warning("環境變數 %s 含非數字項目 %r，已略過", name, part)
+    return values or None
+
+
+def _get_str_list(name):
+    """逗號分隔的字串清單，去除空白與空項目。"""
+    raw = os.environ.get(name, "").strip()
+    if not raw:
+        return []
+    return [part.strip() for part in raw.split(",") if part.strip()]
 
 
 @dataclass
@@ -75,12 +107,6 @@ class Settings:
 
     @classmethod
     def from_env(cls):
-        ids_raw = os.environ.get("CATEGORY_IDS", "").strip()
-        if ids_raw:
-            category_ids = [int(x) for x in ids_raw.split(",") if x.strip()]
-        else:
-            category_ids = list(DEFAULT_CATEGORY_IDS)
-
         db_dir = os.environ.get("DB_DIR", "data")
         if not os.path.isabs(db_dir):
             db_dir = os.path.join(PROJECT_ROOT, db_dir)
@@ -93,5 +119,6 @@ class Settings:
             implicit_wait=_get_int("IMPLICIT_WAIT", 5),
             price_change_threshold=_get_int("PRICE_CHANGE_THRESHOLD", 10),
             crawl_interval_minutes=_get_int("CRAWL_INTERVAL_MINUTES", 0),
-            category_ids=category_ids,
+            category_ids=_get_int_list("CATEGORY_IDS") or list(DEFAULT_CATEGORY_IDS),
+            ignore_items=_get_str_list("IGNORE_ITEMS"),
         )
