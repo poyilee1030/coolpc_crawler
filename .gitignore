@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# 祕密與資料
+.env
+data/
+*.sqlite3
+
+# Selenium Manager 會自動管理，不需手動放置
+chromedriver.exe
+chromedriver
